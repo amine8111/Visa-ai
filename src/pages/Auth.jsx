@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Auth() {
@@ -10,12 +10,12 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError('');
     
     if (!email || !password) {
@@ -36,14 +36,16 @@ export default function Auth() {
         if (error) {
           setError(error.message);
         } else {
-          navigate('/home');
+          setSuccess(true);
+          setTimeout(() => navigate('/home'), 500);
         }
       } else {
         const { error } = await signUp(email, password);
         if (error) {
           setError(error.message);
         } else {
-          navigate('/home');
+          setSuccess(true);
+          setTimeout(() => navigate('/home'), 500);
         }
       }
     } catch (err) {
@@ -97,7 +99,14 @@ export default function Auth() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {success && (
+            <div className="mb-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-2 text-green-400">
+              <CheckCircle size={18} />
+              <span className="text-sm">Success! Redirecting...</span>
+            </div>
+          )}
+
+          <div className="space-y-4">
             <div>
               <label className="label">Email</label>
               <div className="relative">
@@ -143,7 +152,8 @@ export default function Auth() {
             )}
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={loading}
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
@@ -156,7 +166,7 @@ export default function Auth() {
                 </>
               )}
             </button>
-          </form>
+          </div>
 
           <div className="mt-6 text-center text-gray-400 text-sm">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
