@@ -1,7 +1,7 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-const isConfigured = () => SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL !== 'your_supabase_url_here';
+const isConfigured = () => SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_URL.includes('your_');
 
 class SupabaseClient {
   constructor(url, key) {
@@ -10,6 +10,9 @@ class SupabaseClient {
   }
 
   async request(endpoint, options = {}) {
+    if (!this.url || !this.key) {
+      return { data: null, error: { message: 'Supabase not configured' }, status: 500 };
+    }
     const response = await fetch(`${this.url}${endpoint}`, {
       ...options,
       headers: {
@@ -25,6 +28,7 @@ class SupabaseClient {
   auth = {
     signUp: async (email, password) => {
       if (!isConfigured()) {
+        console.log('Demo mode: signUp');
         return { data: { user: { id: 'demo-user-' + Date.now() } }, error: null };
       }
       return this.request('/auth/v1/signup', {
@@ -34,6 +38,7 @@ class SupabaseClient {
     },
     signIn: async (email, password) => {
       if (!isConfigured()) {
+        console.log('Demo mode: signIn');
         return { data: { user: { id: 'demo-user-' + Date.now(), email }, session: { access_token: 'demo-token-' + Date.now() } }, error: null };
       }
       return this.request('/auth/v1/token?grant_type=password', {
