@@ -19,44 +19,16 @@ const initialState = {
     employmentProof: false,
   },
   assessment: null,
-  isSimulatorMode: false,
-  simulatorProfile: null,
 };
 
 function appReducer(state, action) {
   switch (action.type) {
     case 'UPDATE_PROFILE':
-      return {
-        ...state,
-        profile: { ...state.profile, ...action.payload },
-      };
+      return { ...state, profile: { ...state.profile, ...action.payload } };
     case 'UPDATE_DOCUMENT':
-      return {
-        ...state,
-        documents: { ...state.documents, [action.payload]: true },
-      };
+      return { ...state, documents: { ...state.documents, [action.payload]: true } };
     case 'SET_ASSESSMENT':
-      return {
-        ...state,
-        assessment: action.payload,
-      };
-    case 'START_SIMULATOR':
-      return {
-        ...state,
-        isSimulatorMode: true,
-        simulatorProfile: { ...state.profile },
-      };
-    case 'UPDATE_SIMULATOR_PROFILE':
-      return {
-        ...state,
-        simulatorProfile: { ...state.simulatorProfile, ...action.payload },
-      };
-    case 'EXIT_SIMULATOR':
-      return {
-        ...state,
-        isSimulatorMode: false,
-        simulatorProfile: null,
-      };
+      return { ...state, assessment: action.payload };
     case 'RESET':
       return initialState;
     default:
@@ -67,50 +39,13 @@ function appReducer(state, action) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  const updateProfile = (data) => {
-    dispatch({ type: 'UPDATE_PROFILE', payload: data });
-  };
-
-  const updateDocument = (type) => {
-    dispatch({ type: 'UPDATE_DOCUMENT', payload: type });
-  };
-
-  const setAssessment = (data) => {
-    dispatch({ type: 'SET_ASSESSMENT', payload: data });
-  };
-
-  const startSimulator = () => {
-    dispatch({ type: 'START_SIMULATOR' });
-  };
-
-  const updateSimulatorProfile = (data) => {
-    dispatch({ type: 'UPDATE_SIMULATOR_PROFILE', payload: data });
-  };
-
-  const exitSimulator = () => {
-    dispatch({ type: 'EXIT_SIMULATOR' });
-  };
-
-  const reset = () => {
-    dispatch({ type: 'RESET' });
-  };
-
-  const activeProfile = state.isSimulatorMode ? state.simulatorProfile : state.profile;
+  const updateProfile = (data) => dispatch({ type: 'UPDATE_PROFILE', payload: data });
+  const updateDocument = (type) => dispatch({ type: 'UPDATE_DOCUMENT', payload: type });
+  const setAssessment = (data) => dispatch({ type: 'SET_ASSESSMENT', payload: data });
+  const reset = () => dispatch({ type: 'RESET' });
 
   return (
-    <AppContext.Provider
-      value={{
-        ...state,
-        activeProfile,
-        updateProfile,
-        updateDocument,
-        setAssessment,
-        startSimulator,
-        updateSimulatorProfile,
-        exitSimulator,
-        reset,
-      }}
-    >
+    <AppContext.Provider value={{ ...state, updateProfile, updateDocument, setAssessment, reset }}>
       {children}
     </AppContext.Provider>
   );

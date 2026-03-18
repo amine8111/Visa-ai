@@ -1,97 +1,32 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-const initialState = {
-  user: null,
-  session: null,
-  loading: true,
-  error: null,
-};
-
-function authReducer(state, action) {
-  switch (action.type) {
-    case 'SET_SESSION':
-      return {
-        ...state,
-        session: action.payload,
-        user: action.payload?.user || null,
-        loading: false,
-      };
-    case 'SET_USER':
-      return {
-        ...state,
-        user: action.payload,
-        loading: false,
-      };
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
-    case 'SIGN_OUT':
-      return { ...initialState, loading: false };
-    default:
-      return state;
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session) {
-          dispatch({ type: 'SET_SESSION', payload: data.session });
-        } else {
-          dispatch({ type: 'SET_LOADING', payload: false });
-        }
-      } catch (error) {
-        dispatch({ type: 'SET_ERROR', payload: error.message });
-      }
-    };
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      dispatch({ type: 'SET_SESSION', payload: session });
-    });
-
-    return () => subscription?.unsubscribe();
-  }, []);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const signUp = async (email, password) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    const { data, error } = await supabase.auth.signUp(email, password);
-    if (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      return { error };
-    }
-    dispatch({ type: 'SET_SESSION', payload: data.session });
-    return { data, error: null };
+    const demoUser = { id: 'user-' + Date.now(), email };
+    setUser(demoUser);
+    return { data: { user: demoUser }, error: null };
   };
 
   const signIn = async (email, password) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    const { data, error } = await supabase.auth.signIn(email, password);
-    if (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      return { error };
+    if (email && password && password.length >= 6) {
+      const demoUser = { id: 'user-' + Date.now(), email };
+      setUser(demoUser);
+      return { data: { user: demoUser }, error: null };
     }
-    dispatch({ type: 'SET_SESSION', payload: data.session });
-    return { data, error: null };
+    return { data: null, error: { message: 'Invalid credentials' } };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    dispatch({ type: 'SIGN_OUT' });
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
