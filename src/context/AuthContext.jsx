@@ -43,12 +43,22 @@ export function AuthProvider({ children }) {
     const initAuth = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        dispatch({ type: 'SET_SESSION', payload: data.session });
+        if (data?.session) {
+          dispatch({ type: 'SET_SESSION', payload: data.session });
+        } else {
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: error.message });
       }
     };
     initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      dispatch({ type: 'SET_SESSION', payload: session });
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   const signUp = async (email, password) => {
@@ -56,9 +66,10 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp(email, password);
     if (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({ type: 'SET_LOADING', payload: false });
       return { error };
     }
-    dispatch({ type: 'SET_SESSION', payload: data.session || { user: data.user } });
+    dispatch({ type: 'SET_SESSION', payload: data.session });
     return { data, error: null };
   };
 
@@ -67,6 +78,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signIn(email, password);
     if (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({ type: 'SET_LOADING', payload: false });
       return { error };
     }
     dispatch({ type: 'SET_SESSION', payload: data.session });

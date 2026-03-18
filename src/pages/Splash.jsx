@@ -10,26 +10,23 @@ export default function Splash() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-      if (!loading) {
-        navigate(user ? '/home' : '/auth', { replace: true });
-      }
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, [navigate, user, loading]);
+  }, []);
 
   useEffect(() => {
-    if (!loading && !showSplash) {
+    if (!showSplash && !loading) {
       navigate(user ? '/home' : '/auth', { replace: true });
     }
-  }, [loading, showSplash, navigate, user]);
+  }, [showSplash, loading, user, navigate]);
 
   if (!showSplash) return null;
 
   return (
     <div className="fixed inset-0 bg-navy-900 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-24 h-24 mx-auto mb-6 rounded-2xl gradient-bg flex items-center justify-center floating">
+        <div className="w-24 h-24 mx-auto mb-6 rounded-2xl gradient-bg flex items-center justify-center animate-pulse">
           <span className="text-white font-bold text-4xl">V</span>
         </div>
         <h1 className="text-4xl font-bold gradient-text mb-2">VisaAI</h1>

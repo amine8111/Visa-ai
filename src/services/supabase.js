@@ -28,8 +28,7 @@ class SupabaseClient {
   auth = {
     signUp: async (email, password) => {
       if (!isConfigured()) {
-        const demoId = 'demo-' + Date.now();
-        return { data: { user: { id: demoId } }, error: null };
+        return { data: { user: { id: 'demo-' + Date.now() }, session: { access_token: 'demo-token' } }, error: null };
       }
       return this.request('/auth/v1/signup', {
         method: 'POST',
@@ -38,8 +37,10 @@ class SupabaseClient {
     },
     signIn: async (email, password) => {
       if (!isConfigured()) {
-        const demoId = 'demo-' + Date.now();
-        return { data: { user: { id: demoId, email }, session: { access_token: 'demo-token-' + Date.now() } }, error: null };
+        if (email && password && password.length >= 6) {
+          return { data: { user: { id: 'user-' + Date.now(), email }, session: { access_token: 'token-' + Date.now() } }, error: null };
+        }
+        return { data: null, error: { message: 'Invalid credentials' } };
       }
       return this.request('/auth/v1/token?grant_type=password', {
         method: 'POST',
@@ -54,10 +55,11 @@ class SupabaseClient {
       if (!isConfigured()) return { data: { session: null }, error: null };
       return this.request('/auth/v1/session', { method: 'GET' });
     },
-    getUser: async () => {
-      if (!isConfigured()) return { data: { user: { id: 'demo-user' } }, error: null };
-      return this.request('/auth/v1/user', { method: 'GET' });
-    },
+    onAuthStateChange: (callback) => {
+      return {
+        unsubscribe: () => {}
+      };
+    }
   };
 
   from(table) {
@@ -69,10 +71,8 @@ class SupabaseClient {
             if (!isConfigured()) return { data: null, error: null };
             return self.request(`/${table}?${column}=${encodeURIComponent(value)}&limit=1`, { method: 'GET' });
           },
-          order: (column, { ascending = true } = {}) => ({
-            limit: (n) => ({
-              then: (cb) => cb({ data: [], error: null })
-            })
+          order: () => ({
+            limit: () => ({ data: [], error: null })
           }),
         }),
         order: () => ({
@@ -91,10 +91,7 @@ class SupabaseClient {
       },
       update: (data) => ({
         eq: async (column, value) => {
-          if (!isConfigured()) {
-            console.log(`[Demo] Update ${table}:`, { column, value, data });
-            return { data: [data], error: null };
-          }
+          if (!isConfigured()) return { data: [data], error: null };
           return self.request(`/${table}?${column}=${encodeURIComponent(value)}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -142,6 +139,7 @@ export const saveAssessment = async (userId, assessment) => {
     country_scores: assessment.countryScores,
     risk_factors: assessment.risks,
     action_plans: assessment.actions,
+    profile_data: assessment.profile,
   });
   
   return { data, error };

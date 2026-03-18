@@ -10,13 +10,14 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState('');
   
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
     setError('');
+    setSuccess('');
     
     if (!email || !password) {
       setError('Please fill in all fields');
@@ -28,24 +29,27 @@ export default function Auth() {
       return;
     }
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          setError(error.message);
+          setError(error.message || 'Invalid email or password');
         } else {
-          setSuccess(true);
-          setTimeout(() => navigate('/home'), 500);
+          navigate('/home');
         }
       } else {
         const { error } = await signUp(email, password);
         if (error) {
-          setError(error.message);
+          setError(error.message || 'Registration failed');
         } else {
-          setSuccess(true);
-          setTimeout(() => navigate('/home'), 500);
+          setSuccess('Account created! Please check your email to verify, then log in.');
         }
       }
     } catch (err) {
@@ -56,7 +60,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-900 flex items-center justify-center px-4 pt-16">
+    <div className="min-h-screen bg-navy-900 flex items-center justify-center px-4 pt-20">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl gradient-bg flex items-center justify-center">
@@ -66,7 +70,7 @@ export default function Auth() {
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h1>
           <p className="text-gray-400">
-            {isLogin ? 'Sign in to check your visa probability' : 'Start your visa assessment journey'}
+            {isLogin ? 'Sign in to check your visa probability' : 'Create an account to save your assessments'}
           </p>
         </div>
 
@@ -74,7 +78,7 @@ export default function Auth() {
           <div className="flex mb-6 bg-navy-700 rounded-lg p-1">
             <button
               type="button"
-              onClick={() => setIsLogin(true)}
+              onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
               className={`flex-1 py-2 px-4 rounded-md transition-all ${
                 isLogin ? 'bg-neon-purple text-white' : 'text-gray-400'
               }`}
@@ -83,7 +87,7 @@ export default function Auth() {
             </button>
             <button
               type="button"
-              onClick={() => setIsLogin(false)}
+              onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
               className={`flex-1 py-2 px-4 rounded-md transition-all ${
                 !isLogin ? 'bg-neon-purple text-white' : 'text-gray-400'
               }`}
@@ -102,7 +106,7 @@ export default function Auth() {
           {success && (
             <div className="mb-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-2 text-green-400">
               <CheckCircle size={18} />
-              <span className="text-sm">Success! Redirecting...</span>
+              <span className="text-sm">{success}</span>
             </div>
           )}
 
@@ -117,6 +121,7 @@ export default function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className="input pl-10"
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -131,6 +136,7 @@ export default function Auth() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   className="input pl-10"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
               </div>
             </div>
@@ -146,6 +152,7 @@ export default function Auth() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
                     className="input pl-10"
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
@@ -171,17 +178,11 @@ export default function Auth() {
           <div className="mt-6 text-center text-gray-400 text-sm">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => { setIsLogin(!isLogin); setError(''); setSuccess(''); }}
               className="text-neon-purple hover:underline"
             >
               {isLogin ? 'Register' : 'Sign In'}
             </button>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <p className="text-xs text-gray-500 text-center">
-              Demo mode: Use any email/password to explore the app
-            </p>
           </div>
         </div>
       </div>
